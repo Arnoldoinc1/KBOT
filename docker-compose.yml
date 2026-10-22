@@ -1,0 +1,93 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-edu_qa}
+    volumes:
+    - mysql_data:/var/lib/mysql
+    - ./HKU_CoLearning_KBot_Formal_v8.0.13/migrations/mysql_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  knowledge:
+    build: ./HKU_CoLearning_KBot_Formal_v8.0.13
+    command: python -m knowledge_service.run
+    env_file: ./HKU_CoLearning_KBot_Formal_v8.0.13/.env
+    environment:
+      KNOWLEDGE_HOST: 0.0.0.0
+      KNOWLEDGE_DATA_DIR: /app/data/knowledge
+    volumes:
+    - knowledge_data:/app/data/knowledge
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:5100/health')
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    build: ./HKU_CoLearning_KBot_Formal_v8.0.13
+    command: python scripts/migrate_db.py
+    env_file: ./HKU_CoLearning_KBot_Formal_v8.0.13/.env
+    environment:
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-edu_qa}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: 'no'
+  teacher:
+    build: ./HKU_CoLearning_KBot_Formal_v8.0.13
+    command: python -m teacher_app.run
+    env_file: ./HKU_CoLearning_KBot_Formal_v8.0.13/.env
+    environment:
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-edu_qa}
+      KNOWLEDGE_SERVICE_URL: http://knowledge:5100
+      TEACHER_HOST: 0.0.0.0
+      SESSION_COOKIE_PATH: /teacher
+      REMEMBER_COOKIE_PATH: /teacher
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      knowledge:
+        condition: service_healthy
+    restart: unless-stopped
+  student:
+    build: ./HKU_CoLearning_KBot_Formal_v8.0.13
+    command: python -m student_app.run
+    env_file: ./HKU_CoLearning_KBot_Formal_v8.0.13/.env
+    environment:
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-edu_qa}
+      KNOWLEDGE_SERVICE_URL: http://knowledge:5100
+      STUDENT_HOST: 0.0.0.0
+      SESSION_COOKIE_PATH: /student
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      knowledge:
+        condition: service_healthy
+    restart: unless-stopped
+  home-app:
+    build: ./home_app
+    restart: unless-stopped
+    environment:
+      PORT: '3000'
+      STUDENT_TARGET: http://student:8000
+      TEACHER_TARGET: http://teacher:5000
+    ports:
+    - 127.0.0.1:13000:3000
+    depends_on:
+    - teacher
+    - student
+volumes:
+  mysql_data: null
+  knowledge_data: null
+name: kbot-v81-home

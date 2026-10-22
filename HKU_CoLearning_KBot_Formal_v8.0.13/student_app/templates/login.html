@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Login · HKU Co-Learning KBot{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block main_class %}auth-main{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <section class="auth-card">
+    <div class="section-marker"></div>
+    <h1>HKU Co-Learning KBot</h1>
+    <p class="tagline">AI-supported co-learning and formative assessment</p>
+
+    <form id="login-form" method="post" action="{{ url_for('auth.login_action') }}">
+      <label class="field-label" for="username">Username</label>
+      <div class="input-group">
+        <i class="fas fa-user" aria-hidden="true"></i>
+        <input id="username" name="username" type="text" placeholder="Enter your username" autocomplete="username" required>
+      </div>
+
+      <label class="field-label" for="password">Password</label>
+      <div class="input-group">
+        <i class="fas fa-lock" aria-hidden="true"></i>
+        <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+      </div>
+
+      <button class="btn-primary btn-block" type="submit">Log in <i class="fas fa-arrow-right-to-bracket" aria-hidden="true"></i></button>
+      {% if error %}<p class="error-msg">{{ error }}</p>{% endif %}
+      <p class="message hidden" aria-live="polite"></p>
+    </form>
+
+    <div class="auth-switch">
+      New student? <a href="{{ url_for('auth.register_page') }}">Create an account</a>
+    </div>
+
+    {% if config.DEMO_USER and config.DEMO_PASS %}
+    <div class="demo-hint">
+      <i class="fas fa-circle-info" aria-hidden="true"></i>
+      Demo account: <strong>{{ config.DEMO_USER }}</strong> / <strong>{{ config.DEMO_PASS }}</strong>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script>bindJsonForm('#login-form', {{ url_for('auth.login_action')|tojson }});</script>{% endblock %}

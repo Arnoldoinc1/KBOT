@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}{{ label }} · HKU Co-Learning KBot{% endblock %}
+{% block body_attrs %}data-quiz-type="{{ quiz_type }}" data-quiz-label="{{ label }}"{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <span class="page-eyebrow">Co-learning assessment · {{ chapter }}</span>
+  <h1>{{ label }}</h1>
+  <p>Complete every question type in sequence. A correct answer moves forward; an incorrect answer generates another question of the same type.</p>
+</section>
+
+<section class="quiz-card">
+  <div class="flow-steps" aria-label="Quiz flow progress">
+    {% for item in types %}
+    <div class="flow-step {{ 'active' if item == quiz_type else '' }} {{ 'completed' if loop.index0 < current_flow_index else '' }} {{ 'locked' if loop.index0 > current_flow_index else '' }}"
+         aria-current="{{ 'step' if item == quiz_type else 'false' }}">
+      <span class="flow-step-number">{{ loop.index }}</span>
+      <span>{{ labels[item] }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if topic_locked %}
+  <div class="topic-lock" aria-label="Current quiz topic">
+    <span class="topic-lock-label"><i class="fas fa-lightbulb" aria-hidden="true"></i> Topic for this quiz flow</span>
+    <strong>{{ topic }}</strong>
+    <span class="topic-lock-note">The same topic is used for all five question types.</span>
+  </div>
+  <div class="topic-section topic-section-locked">
+    <button id="generate" class="btn-primary" type="button">Generate {{ label }} Question <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i></button>
+  </div>
+  {% else %}
+  <div class="topic-section">
+    <div class="input-group">
+      <i class="fas fa-lightbulb" aria-hidden="true"></i>
+      <input id="topic" type="text" placeholder="Enter one topic for the full quiz, e.g. GPS" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+    </div>
+    <button id="generate" class="btn-primary" type="button">Generate Question <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i></button>
+  </div>
+  {% endif %}
+
+  <p id="status" class="status-message hidden" aria-live="polite"></p>
+  <div id="quiz" class="quiz-area"></div>
+  <div id="citations" class="reference-list"></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  setupExercise(
+    {{ quiz_type|tojson }},
+    {{ auto_generate|tojson }},
+    {{ topic|tojson }}
+  );
+</script>
+{% endblock %}

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account · HKU Co-Learning KBot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+
+        :root {
+            --moodle-green: #00a887;
+            --moodle-green-dark: #007a67;
+            --moodle-deep: #27313d;
+            --moodle-page: #eef1f3;
+            --moodle-border: #d9dee2;
+        }
+        * { box-sizing: border-box; }
+        .login-bg {
+            background: var(--moodle-page);
+            border-top: 4px solid var(--moodle-green);
+            color: #343d45;
+        }
+        .moodle-topbar {
+            width: 100%;
+            min-height: 68px;
+            background: #fff;
+            border-bottom: 1px solid var(--moodle-border);
+            box-shadow: 0 2px 8px rgba(24, 38, 48, .08);
+            padding: 7px 22px;
+            display: flex;
+            align-items: center;
+        }
+        .moodle-brand {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        .moodle-brand img {
+            display: block;
+            width: min(570px, 58vw);
+            height: 48px;
+            object-fit: contain;
+            object-position: left center;
+        }
+        .auth-card {
+            border-radius: 4px !important;
+            border: 1px solid var(--moodle-border);
+            box-shadow: 0 8px 22px rgba(24, 38, 48, .10) !important;
+        }
+        .auth-card input {
+            border-radius: 3px !important;
+        }
+        .auth-card input:focus {
+            --tw-ring-color: rgba(0, 168, 135, .22) !important;
+            border-color: var(--moodle-green) !important;
+        }
+        .auth-card button[type="submit"] {
+            border-radius: 3px !important;
+            background: var(--moodle-green) !important;
+            box-shadow: 0 2px 5px rgba(0, 122, 103, .18) !important;
+        }
+        .auth-card button[type="submit"]:hover {
+            background: var(--moodle-green-dark) !important;
+        }
+        .auth-card a,
+        .auth-card label i {
+            color: var(--moodle-green-dark) !important;
+        }
+        .moodle-footer {
+            width: 100%;
+            border-top: 2px solid var(--moodle-green);
+            background: var(--moodle-deep);
+            color: #e7ecef;
+            padding: 24px 28px;
+        }
+        .moodle-footer-inner {
+            max-width: 1380px;
+            margin: 0 auto;
+            display: flex;
+            gap: 10px 22px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            font-size: .84rem;
+        }
+        .moodle-footer strong { color: #fff; }
+        @media (max-width: 800px) {
+            .moodle-topbar { padding: 8px 14px; }
+            .moodle-brand img {
+                width: min(500px, 92vw);
+                height: 43px;
+            }
+        }
+
+    </style>
+<script>
+(function () {
+  const prefix = {{ (request.script_root if request is defined else "")|tojson }};
+  function path(url) {
+    return typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')
+      && url !== prefix && !url.startsWith(prefix + '/') ? prefix + url : url;
+  }
+  const originalFetch = window.fetch;
+  window.fetch = function (url, options) { return originalFetch.call(this, path(url), options); };
+  const originalOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    arguments[1] = path(url); return originalOpen.apply(this, arguments);
+  };
+})();
+</script>
+</head>
+<body class="login-bg min-h-screen flex flex-col">
+    <header class="moodle-topbar">
+        <div class="moodle-topbar-left">
+            <a href="/" class="moodle-brand" aria-label="HKU Co-Learning KBot">
+                <img src="{{ url_for('static', filename='brand-lockup.png') }}"
+                     alt="HKU, Department of Electrical and Computer Engineering, HKU Co-Learning KBot">
+            </a>
+        </div>
+    </header>
+    <main class="flex-1 w-full flex items-center justify-center py-10">
+    <div class="max-w-md w-full mx-4">
+        <div class="auth-card bg-white shadow-2xl p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold text-slate-800">HKU Co-Learning KBot</h1>
+                <p class="text-slate-500 mt-2">Create Teacher Account</p>
+            </div>
+
+            <form id="registerForm">
+                <div class="mb-4">
+                    <label class="block text-slate-700 font-medium mb-2">
+                        <i class="fas fa-user mr-2 text-teal-500"></i>Username
+                    </label>
+                    <input type="text" id="username" placeholder="At least 3 characters"
+                           class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-slate-700 font-medium mb-2">
+                        <i class="fas fa-id-card mr-2 text-teal-500"></i>Display Name
+                    </label>
+                    <input type="text" id="name" placeholder="How you want to be called"
+                           class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-slate-700 font-medium mb-2">
+                        <i class="fas fa-lock mr-2 text-teal-500"></i>Password
+                    </label>
+                    <input type="password" id="password" placeholder="At least 6 characters"
+                           class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
+                </div>
+                <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-teal-200">
+                    <i class="fas fa-user-plus mr-2"></i>Create Account
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-sm text-slate-500">
+                Already have an account? <a href="{{ request.script_root }}/login" class="text-teal-600 hover:text-teal-700 font-medium">Sign in</a>
+            </div>
+        </div>
+    </div>
+    </main>
+    <footer class="moodle-footer">
+        <div class="moodle-footer-inner">
+            <strong>HKU Co-Learning KBot</strong>
+            <span>The University of Hong Kong · Department of Electrical and Computer Engineering</span>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const name = document.getElementById('name').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                alert('Please fill in username and password');
+                return;
+            }
+            if (username.length < 3) {
+                alert('Username must be at least 3 characters');
+                return;
+            }
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, name, password })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    alert(data.message);
+                    window.location.href = '{{ request.script_root }}/';
+                } else {
+                    alert(data.message || 'Registration failed.');
+                }
+            } catch (error) {
+                alert('Network error. Please try again later.');
+            }
+        });
+
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('registerForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>

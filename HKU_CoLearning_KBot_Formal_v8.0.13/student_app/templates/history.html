@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}My History · HKU Co-Learning KBot{% endblock %}
+{% block main_class %}history-main{% endblock %}
+{% block content %}
+<section class="page-heading history-heading">
+  <div>
+    <span class="page-eyebrow">Learning record</span>
+    <h1>My History</h1>
+    <p>Review your questions, answers, scores, and teacher feedback.</p>
+  </div>
+  <a class="btn-secondary history-back-button" href="{{ back_to_quiz_url }}"><i class="fas fa-arrow-left" aria-hidden="true"></i> {{ back_to_quiz_label }}</a>
+</section>
+
+<section class="history-card">
+  <div class="history-section-title">
+    <h2>Exercise attempts</h2>
+    <span>{{ exercises|length }} record{{ '' if exercises|length == 1 else 's' }}</span>
+  </div>
+
+  <div class="history-list">
+    {% for r in exercises %}
+    <article class="history-record">
+      <div class="history-record-top">
+        <strong>{{ r.question_type }} · {{ r.score }}/100</strong>
+        <span class="history-result {{ 'history-result-correct' if r.result == 'Correct' else 'history-result-incorrect' }}">{{ r.result }}</span>
+      </div>
+      <p><b>Question type:</b> {{ r.question_type }}</p>
+      <p class="history-question"><b>Question:</b> {{ r.question }}</p>
+      <p><b>Student answer:</b> {{ r.student_answer }}</p>
+      <p><b>Result:</b> {{ r.result }}</p>
+      <p><b>Score:</b> {{ r.score }}/100</p>
+      {% if r.options %}
+      <div class="history-options-block">
+        <b>Options:</b>
+        <ol class="history-options">
+          {% for option in r.options %}
+          <li class="{% if option.is_correct %}history-option-correct{% endif %}{% if option.is_selected %} history-option-selected{% endif %}">
+            <span class="history-option-label">{{ option.label }}.</span> {{ option.text }}
+            {% if option.is_correct %}<span class="history-option-tag">Correct</span>{% endif %}
+            {% if option.is_selected %}<span class="history-option-tag">Your choice</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% endif %}
+      <p><b>{{ r.correct_label }}:</b> {{ r.correct_answer }}</p>
+      {% if r.teacher_feedback %}
+      <p class="teacher-feedback"><b>Teacher feedback:</b> {{ r.teacher_feedback }}</p>
+      {% endif %}
+    </article>
+    {% else %}
+    <p class="empty-state">No exercise attempts yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="history-section-title notes-history-title">
+    <h2>Notes questions</h2>
+    <span>{{ notes|length }} record{{ '' if notes|length == 1 else 's' }}</span>
+  </div>
+
+  <div class="history-list">
+    {% for r in notes %}
+    <article class="history-record">
+      <strong>{{ r.question }}</strong>
+      <p>{{ r.answer }}</p>
+      <small>{{ r.chapter }}</small>
+    </article>
+    {% else %}
+    <p class="empty-state">No Notes QA history yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

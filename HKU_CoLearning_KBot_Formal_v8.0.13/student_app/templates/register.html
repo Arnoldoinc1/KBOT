@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Register · HKU Co-Learning KBot{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block main_class %}auth-main{% endblock %}
+{% block content %}
+<div class="auth-container">
+  <section class="auth-card">
+    <div class="section-marker"></div>
+    <h1>Create student account</h1>
+    <p class="tagline">Register for the student quiz and formative assessment portal.</p>
+
+    <form id="register-form" method="post" action="{{ url_for('auth.register_action') }}">
+      <label class="field-label" for="registerName">Display name</label>
+      <div class="input-group">
+        <i class="fas fa-id-card" aria-hidden="true"></i>
+        <input id="registerName" name="name" type="text" placeholder="Enter your name (optional)" autocomplete="name" maxlength="80">
+      </div>
+
+      <label class="field-label" for="registerUsername">Username</label>
+      <div class="input-group">
+        <i class="fas fa-user" aria-hidden="true"></i>
+        <input id="registerUsername" name="username" type="text" placeholder="Choose a username" autocomplete="username" required minlength="3">
+      </div>
+
+      <label class="field-label" for="registerPassword">Password</label>
+      <div class="input-group">
+        <i class="fas fa-lock" aria-hidden="true"></i>
+        <input id="registerPassword" name="password" type="password" placeholder="At least 6 characters" autocomplete="new-password" required minlength="6">
+      </div>
+
+      <label class="field-label" for="registerConfirmPassword">Confirm password</label>
+      <div class="input-group">
+        <i class="fas fa-shield-halved" aria-hidden="true"></i>
+        <input id="registerConfirmPassword" name="confirm_password" type="password" placeholder="Re-enter your password" autocomplete="new-password" required>
+      </div>
+
+      <button class="btn-primary btn-block" type="submit">Create account <i class="fas fa-user-plus" aria-hidden="true"></i></button>
+      {% if error %}<p class="error-msg">{{ error }}</p>{% endif %}
+      <p class="message hidden" aria-live="polite"></p>
+    </form>
+
+    <div class="auth-switch">
+      Already registered? <a href="{{ url_for('auth.login_page') }}">Return to login</a>
+    </div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script>bindJsonForm('#register-form', {{ url_for('auth.register_action')|tojson }});</script>{% endblock %}

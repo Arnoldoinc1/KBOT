@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/shared/*.db*
+data/knowledge/*.db*
+data/knowledge/uploads/*
+!data/knowledge/uploads/.gitkeep
+reports/runtime-*.log
+

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Student Home · HKU Co-Learning KBot{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <span class="page-eyebrow">Student learning portal</span>
+  <h1>Welcome, {{ session.get('display_name') }}</h1>
+  <p>Choose an activity. Course materials uploaded by your teacher remain the primary learning source; KBot may generate MCQ distractors or use general knowledge in Notes Q&amp;A when needed.</p>
+</section>
+
+<section class="activity-grid">
+  {% if 'exercise' in enabled %}
+  <a class="activity-card" href="{{ url_for('exercise.setup_page') }}">
+    <span class="activity-number">A</span>
+    <div>
+      <span class="activity-kicker">Formative assessment</span>
+      <h2>Exercise Generation</h2>
+      <p>Complete True/False, MCQ, Matching, Fill Blank, and Short Answer questions in sequence.</p>
+      <strong>Start session →</strong>
+    </div>
+  </a>
+  {% endif %}
+
+  {% if 'notes' in enabled %}
+  <a class="activity-card" href="{{ url_for('notes.notes_page') }}">
+    <span class="activity-number">B</span>
+    <div>
+      <span class="activity-kicker">Course-note support</span>
+      <h2>Notes Question Answering</h2>
+      <p>Ask a natural-language question and inspect the exact file, section, page, and excerpt.</p>
+      <strong>Ask a question →</strong>
+    </div>
+  </a>
+  {% endif %}
+</section>
+{% endblock %}

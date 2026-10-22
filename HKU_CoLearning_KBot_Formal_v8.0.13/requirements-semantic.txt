@@ -1,0 +1,6 @@
+# Optional production enhancement for dense teacher-record search and
+# Knowledge Service RAG retrieval. Install on hosts that run Teacher or
+# Knowledge services, then point the relevant *_MODEL_PATH settings at an
+# already-downloaded local SentenceTransformer model directory.
+chromadb
+sentence-transformers
