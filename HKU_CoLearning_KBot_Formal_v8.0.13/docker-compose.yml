@@ -1,0 +1,72 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-edu_qa}
+    ports: ["3307:3306"]
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./migrations/mysql_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  knowledge:
+    build: .
+    command: python -m knowledge_service.run
+    env_file: .env
+    environment:
+      KNOWLEDGE_HOST: 0.0.0.0
+      KNOWLEDGE_DATA_DIR: /app/data/knowledge
+    ports: ["5100:5100"]
+    volumes: ["knowledge_data:/app/data/knowledge"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5100/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build: .
+    command: python scripts/migrate_db.py
+    env_file: .env
+    environment:
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-edu_qa}
+    depends_on:
+      mysql: {condition: service_healthy}
+    restart: "no"
+
+  teacher:
+    build: .
+    command: python -m teacher_app.run
+    env_file: .env
+    environment:
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-edu_qa}
+      KNOWLEDGE_SERVICE_URL: http://knowledge:5100
+      TEACHER_HOST: 0.0.0.0
+    ports: ["5000:5000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      knowledge: {condition: service_healthy}
+
+  student:
+    build: .
+    command: python -m student_app.run
+    env_file: .env
+    environment:
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE:-edu_qa}
+      KNOWLEDGE_SERVICE_URL: http://knowledge:5100
+      STUDENT_HOST: 0.0.0.0
+    ports: ["8000:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      knowledge: {condition: service_healthy}
+
+volumes:
+  mysql_data:
+    name: ${MYSQL_VOLUME_NAME:-edu_qa_mysql_data}
+  knowledge_data:
+    name: ${KNOWLEDGE_VOLUME_NAME:-kbot_knowledge_data}

@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard · HKU Co-Learning KBot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .status-correct { background: #dcfce7; color: #166534; }
+        .status-incorrect { background: #fee2e2; color: #991b1b; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+
+        :root {
+            --moodle-green: #00a887;
+            --moodle-green-dark: #007a67;
+            --moodle-deep: #27313d;
+            --moodle-text: #343d45;
+            --moodle-page: #eef1f3;
+            --moodle-border: #d9dee2;
+            --moodle-soft-green: #e9f7f4;
+            --topbar-height: 68px;
+            --sidebar-width: 256px;
+        }
+
+        body {
+            border-top: 4px solid var(--moodle-green);
+            background: var(--moodle-page);
+            color: var(--moodle-text);
+        }
+
+        .moodle-topbar {
+            position: fixed;
+            top: 4px;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            min-height: var(--topbar-height);
+            background: #fff;
+            border-bottom: 1px solid var(--moodle-border);
+            box-shadow: 0 2px 8px rgba(24, 38, 48, .08);
+            padding: 7px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .moodle-topbar-left {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .moodle-brand {
+            display: inline-flex;
+            align-items: center;
+            min-width: 0;
+            text-decoration: none;
+        }
+
+        .moodle-brand img {
+            display: block;
+            width: min(570px, 51vw);
+            height: 48px;
+            object-fit: contain;
+            object-position: left center;
+        }
+
+        .moodle-nav {
+            display: flex;
+            align-items: center;
+            align-self: stretch;
+            gap: 22px;
+            color: #59646d;
+            font-size: .88rem;
+            white-space: nowrap;
+        }
+
+        .moodle-nav-item {
+            height: 100%;
+            display: inline-flex;
+            align-items: center;
+            border-bottom: 3px solid transparent;
+        }
+
+        .moodle-nav-item.active {
+            color: var(--moodle-green-dark);
+            border-bottom-color: var(--moodle-green);
+            font-weight: 600;
+        }
+
+        .moodle-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #58636c;
+            font-size: .84rem;
+            white-space: nowrap;
+        }
+
+        .moodle-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #f0f2f3;
+            color: #66717b;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e0e4e7;
+        }
+
+        /* Moodle drawer-style sidebar, same location and functions */
+        .moodle-sidebar {
+            top: calc(var(--topbar-height) + 4px);
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--topbar-height) - 4px);
+            background: #f1f3f4;
+            color: #34404a;
+            border-right: 1px solid var(--moodle-border);
+            box-shadow: none;
+            overflow-y: auto;
+        }
+
+        .teacher-card {
+            background: #fff;
+            border: 1px solid var(--moodle-border);
+            border-radius: 4px !important;
+        }
+
+        .teacher-avatar {
+            background: var(--moodle-soft-green) !important;
+            color: var(--moodle-green-dark);
+            border-radius: 50%;
+        }
+
+        .sidebar-action {
+            background: #fff !important;
+            color: #34404a !important;
+            border: 1px solid #d8dde1;
+            border-radius: 3px !important;
+            box-shadow: none;
+        }
+
+        .sidebar-action:hover {
+            background: var(--moodle-soft-green) !important;
+            border-color: #b8ddd4;
+            color: var(--moodle-green-dark) !important;
+        }
+
+        .sidebar-primary {
+            background: var(--moodle-green) !important;
+            color: #fff !important;
+            border-color: var(--moodle-green);
+        }
+
+        .sidebar-primary:hover {
+            background: var(--moodle-green-dark) !important;
+            color: #fff !important;
+        }
+
+        .sidebar-danger {
+            background: #fff !important;
+            color: #b4233b !important;
+            border-color: #e7b9c1;
+        }
+
+        .sidebar-danger:hover {
+            background: #fff1f3 !important;
+        }
+
+        .sidebar-section {
+            border-top-color: #d9dee2 !important;
+        }
+
+        .sidebar-muted {
+            color: #72808b !important;
+        }
+
+        /* Original main content position is retained */
+        .moodle-main {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            padding: calc(var(--topbar-height) + 26px) 26px 0;
+            display: flex;
+            flex-direction: column;
+            background: var(--moodle-page);
+        }
+
+        .moodle-page {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto 34px;
+            padding: 28px;
+            flex: 1;
+            background: #fff;
+            border: 1px solid var(--moodle-border);
+            box-shadow: 0 3px 12px rgba(24, 38, 48, .06);
+        }
+
+        .dashboard-title {
+            color: var(--moodle-deep);
+            font-size: 1.85rem;
+        }
+
+        .dashboard-title i,
+        .moodle-link {
+            color: var(--moodle-green-dark) !important;
+        }
+
+        .record-pill {
+            border-radius: 3px !important;
+            box-shadow: none !important;
+            background: #f4f6f7 !important;
+        }
+
+        .moodle-card {
+            border: 1px solid var(--moodle-border) !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 12px rgba(24, 38, 48, .06) !important;
+        }
+
+        .moodle-main button,
+        .moodle-main input,
+        .moodle-main select,
+        .moodle-main a {
+            border-radius: 3px !important;
+        }
+
+        .moodle-primary {
+            background: var(--moodle-green) !important;
+            color: #fff !important;
+        }
+
+        .moodle-primary:hover {
+            background: var(--moodle-green-dark) !important;
+        }
+
+        .moodle-secondary {
+            background: #34414d !important;
+            color: #fff !important;
+        }
+
+        .moodle-secondary:hover {
+            background: #27313d !important;
+        }
+
+        .moodle-soft-button {
+            background: var(--moodle-soft-green) !important;
+            color: var(--moodle-green-dark) !important;
+        }
+
+        .moodle-soft-button:hover {
+            background: #dff1ed !important;
+        }
+
+        .moodle-table thead {
+            background: #f3f5f6 !important;
+            color: #53606a !important;
+        }
+
+        .moodle-table tbody tr:hover {
+            background: #f7fbfa !important;
+        }
+
+        #batch-bar {
+            background: var(--moodle-soft-green) !important;
+        }
+
+        .moodle-footer {
+            margin: auto -26px 0;
+            border-top: 2px solid var(--moodle-green);
+            background: var(--moodle-deep);
+            color: #e7ecef;
+            padding: 24px 28px;
+        }
+
+        .moodle-footer-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            gap: 10px 22px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            font-size: .84rem;
+        }
+
+        .moodle-footer strong { color: #fff; }
+
+        @media (max-width: 1100px) {
+            .moodle-brand img {
+                width: min(500px, 52vw);
+                height: 43px;
+            }
+
+            .moodle-nav {
+                display: none;
+            }
+        }
+
+        @media (max-width: 760px) {
+            :root { --sidebar-width: 220px; }
+
+            .moodle-topbar { padding: 8px 12px; }
+
+            .moodle-brand img {
+                width: min(430px, 66vw);
+                height: 39px;
+            }
+
+            .moodle-user > span:not(.moodle-avatar) {
+                display: none;
+            }
+
+            .moodle-main {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .moodle-page {
+                padding: 18px;
+            }
+        }
+    </style>
+<script>
+(function () {
+  const prefix = {{ (request.script_root if request is defined else "")|tojson }};
+  function path(url) {
+    return typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')
+      && url !== prefix && !url.startsWith(prefix + '/') ? prefix + url : url;
+  }
+  const originalFetch = window.fetch;
+  window.fetch = function (url, options) { return originalFetch.call(this, path(url), options); };
+  const originalOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    arguments[1] = path(url); return originalOpen.apply(this, arguments);
+  };
+})();
+</script>
+</head>
+<body class="bg-slate-50 text-slate-700 flex min-h-screen">
+    <header class="moodle-topbar">
+        <div class="moodle-topbar-left">
+            <a href="/" class="moodle-brand" aria-label="HKU Co-Learning KBot">
+                <img src="{{ url_for('static', filename='brand-lockup.png') }}"
+                     alt="HKU, Department of Electrical and Computer Engineering, HKU Co-Learning KBot">
+            </a>
+            <nav class="moodle-nav" aria-label="Primary navigation">
+                <span class="moodle-nav-item active">Dashboard</span>
+            </nav>
+        </div>
+        <div class="moodle-user">
+            <i class="far fa-bell"></i>
+            <span>{{ user.name }}</span>
+            <span class="moodle-avatar"><i class="fas fa-user"></i></span>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <div class="moodle-sidebar w-64 p-6 fixed">
+<!-- Teacher info -->
+        <div class="teacher-card mb-6 p-3">
+            <div class="flex items-center">
+                <div class="teacher-avatar w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium">{{ user.name }}</p>
+                    <p class="sidebar-muted text-xs">{{ user.username }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action buttons -->
+        <input type="file" id="csvInput" accept=".csv" class="hidden" onchange="uploadCSV()">
+        <input type="file" id="knowledgeInput" accept=".pdf,.docx,.txt" class="hidden" onchange="uploadKnowledge()">
+        
+        <button onclick="document.getElementById('csvInput').click()" class="sidebar-action sidebar-primary w-full p-3 mb-3 transition flex items-center justify-center">
+            <i class="fas fa-upload mr-2"></i> Import Student Answers
+        </button>
+        
+        <button onclick="document.getElementById('knowledgeInput').click()" class="sidebar-action sidebar-primary w-full p-3 mb-3 transition flex items-center justify-center">
+            <i class="fas fa-book mr-2"></i> Upload Course Material
+        </button>
+
+        <button onclick="syncFromStudents()" class="sidebar-action sidebar-primary w-full p-3 mb-3 transition flex items-center justify-center">
+            <i class="fas fa-sync-alt mr-2"></i> Sync from Student App
+        </button>
+
+        <button onclick="location.href='{{ request.script_root }}/export'" class="sidebar-action w-full p-3 mb-3 transition flex items-center justify-center">
+            <i class="fas fa-download mr-2"></i> Export Graded CSV
+        </button>
+        <button onclick="location.href='{{ request.script_root }}/export_excel'" class="sidebar-action w-full p-3 mb-3 transition flex items-center justify-center">
+            <i class="fas fa-file-excel mr-2"></i> Export Full Excel
+        </button>
+        <button onclick="location.href='{{ request.script_root }}/export_kahoot'" class="sidebar-action w-full p-3 mb-3 transition flex items-center justify-center">
+            <i class="fas fa-gamepad mr-2"></i> Export Kahoot Template
+        </button>
+
+        <button onclick="fetch('/api/logout', {method:'POST'}).then(()=>location.href='{{ request.script_root }}/login')" class="sidebar-action sidebar-danger w-full p-3 transition flex items-center justify-center">
+            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </button>
+
+        <!-- Knowledge base -->
+        <div class="sidebar-section mt-6 pt-6 border-t">
+            <div class="sidebar-muted text-xs mb-2 flex justify-between items-center">
+                <span><i class="fas fa-database mr-1"></i> Knowledge Base</span>
+                <button onclick="loadKnowledgeList()" class="sidebar-muted hover:text-teal-700"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div id="knowledge-list" class="sidebar-muted text-xs max-h-32 overflow-y-auto space-y-1">
+                <span class="italic">No documents loaded</span>
+            </div>
+        </div>
+
+        <!-- Dashboard summary -->
+        <div class="sidebar-section mt-6 pt-6 border-t">
+            <div id="dashboard-stats" class="text-sm">
+                <div class="flex justify-between mb-2"><span>Total Records</span><span id="total-count">-</span></div>
+                <div class="flex justify-between mb-2"><span>AI Correct / Total</span><span id="ai-correct-total">-</span></div>
+                <div class="flex justify-between mb-2"><span>Pending Review</span><span id="pending-count">-</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="moodle-main flex-1">
+        <div class="moodle-page">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="dashboard-title font-black tracking-tight">Smart Grading Dashboard</h1>
+                    <p class="text-sm text-slate-500 mt-1">HKU Co-Learning KBot</p>
+                </div>
+                <span class="record-pill px-4 py-2 text-sm font-medium text-slate-500 border">
+                    Total {{ total_items }} records
+                </span>
+            </div>
+
+            <!-- Search bar -->
+            <div class="moodle-card bg-white p-5 mb-8 flex gap-4 border border-slate-200">
+                <input type="text" id="keyword" placeholder="Hybrid semantic + keyword search by question, answer, topic, or student..." 
+                       class="flex-1 border-none focus:ring-0 text-lg outline-none px-4">
+                <button onclick="performSearch()" class="moodle-primary px-6 py-2 font-medium transition shadow">
+                    <i class="fas fa-search mr-1"></i> Hybrid Search
+                </button>
+                <button onclick="searchByStudentName()" class="moodle-secondary px-6 py-2 font-medium transition shadow">
+                    <i class="fas fa-user-graduate mr-1"></i> Search by Student Name
+                </button>
+                <button onclick="loadDashboardStats()" class="bg-slate-100 hover:bg-slate-200 px-4 rounded-xl transition">
+                    <i class="fas fa-chart-line"></i>
+                </button>
+                <button onclick="location.reload()" class="moodle-link text-slate-400 px-2 transition">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="moodle-card bg-white p-4 mb-6 flex gap-3 flex-wrap border border-slate-200">
+                <select id="filter-status" class="px-4 py-2 border rounded-lg text-sm">
+                    <option value="all">All Status</option>
+                    <option value="correct">AI Correct</option>
+                    <option value="incorrect">AI Incorrect</option>
+                    <option value="pending">Pending Review</option>
+                </select>
+                <select id="filter-chapter" class="px-4 py-2 border rounded-lg text-sm">
+                    <option value="all">All Chapters</option>
+                </select>
+                <button onclick="applyFilters()" class="moodle-soft-button px-4 py-2 text-sm">
+                    Apply Filters
+                </button>
+            </div>
+
+            <!-- Data table -->
+            <div class="moodle-card bg-white border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="moodle-table w-full text-left">
+                        <thead class="bg-slate-50 border-b text-slate-500 text-xs font-bold uppercase">
+                            <tr>
+                                <th class="px-4 py-4 w-8"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
+                                <th class="px-4 py-4 w-32">Student Name</th>
+                                <th class="px-4 py-4 w-24">Chapter</th>
+                                <th class="px-4 py-4 w-24">Question Type</th>
+                                <th class="px-4 py-4 min-w-[200px]">Question</th>
+                                <th class="px-4 py-4 min-w-[150px]">Student Answer</th>
+                                <th class="px-4 py-4 w-24">AI Score</th>
+                                <th class="px-4 py-4 w-20">Teacher Score</th>
+                                <th class="px-4 py-4 w-24">Status</th>
+                                <th class="px-4 py-4 w-24">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-list" class="divide-y divide-slate-100">
+                            {% for item in items %}
+                            <tr class="hover:bg-slate-50 transition text-sm" data-id="{{ item.id }}" data-status="{% if item.teacher_verified %}verified{% else %}pending{% endif %}">
+                                <td class="px-4 py-3"><input type="checkbox" class="row-checkbox" value="{{ item.id }}"></td>
+                                <td class="px-4 py-3">
+                                    <a href="javascript:void(0)" onclick='showProfile({{ item.name|tojson }})' class="font-bold moodle-link hover:underline">
+                                        {{ item.name }}
+                                    </a>
+                                </td>
+                                <td class="px-4 py-3">{{ item.chapter }}</td>
+                                <td class="px-4 py-3">{{ item.question_type }}</td>
+                                <td class="px-4 py-3 max-w-[250px]" title="{{ item.question }}">
+                                    <div class="truncate">{{ item.question }}</div>
+                                    {% if item.options_display %}
+                                    <div class="mt-1 text-[11px] text-slate-500 truncate" title="{{ item.options_display }}">{{ item.options_display }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 max-w-[220px]" title="{{ item.answer_display }}">
+                                    <div class="truncate">{{ item.answer_display or '-' }}</div>
+                                    {% if item.correct_answer_display %}
+                                    <div class="mt-1 text-[11px] text-emerald-700 truncate" title="{{ item.correct_answer_display }}">Correct: {{ item.correct_answer_display }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span class="px-2 py-1 rounded-full text-xs {{ 'status-correct' if item.ai_correct else 'status-incorrect' }}">
+                                        {{ item.ai_score }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <input type="number" id="score-{{ item.id }}" value="{{ item.score }}" 
+                                           class="w-20 border rounded-lg p-1 text-center text-sm font-medium">
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-1 rounded-full text-xs {% if item.teacher_verified %}status-correct{% else %}status-pending{% endif %}">
+                                        {{ 'Verified' if item.teacher_verified else 'Pending' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-center space-x-2 whitespace-nowrap">
+                                    <button onclick="showDetail('{{ item.id }}')" class="moodle-link hover:text-teal-700" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button onclick="saveItem('{{ item.id }}', '{{ item.name }}')" class="text-emerald-500 hover:text-emerald-700" title="Save Changes">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                    <button onclick="deleteItem('{{ item.id }}')" class="text-slate-300 hover:text-rose-500" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Batch actions bar -->
+                <div id="batch-bar" class="hidden p-4 bg-teal-50 border-t flex justify-between items-center">
+                    <span>Selected <span id="selected-count">0</span> records</span>
+                    <div class="flex gap-2">
+                        <button onclick="batchVerify()" class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm">Batch Verify</button>
+                        <button onclick="batchReevaluate()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm">Re-evaluate by AI</button>
+                        <button onclick="batchDelete()" class="px-4 py-2 bg-rose-600 text-white rounded-lg text-sm">Batch Delete</button>
+                    </div>
+                </div>
+
+                <div id="pagination-nav" class="p-6 bg-slate-50 flex justify-between items-center border-t">
+                    <span class="text-sm text-slate-400">Page {{ page }} / {{ total_pages }}</span>
+                    <div class="flex gap-2">
+                        {% if page > 1 %}<a href="{{ request.script_root }}/?page={{ page - 1 }}" class="px-6 py-2 bg-white border rounded-xl hover:shadow-md transition">Previous</a>{% endif %}
+                        {% if page < total_pages %}<a href="{{ request.script_root }}/?page={{ page + 1 }}" class="px-6 py-2 bg-white border rounded-xl hover:shadow-md transition">Next</a>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="moodle-footer">
+            <div class="moodle-footer-inner">
+                <strong>HKU Co-Learning KBot</strong>
+                <span>The University of Hong Kong · Department of Electrical and Computer Engineering</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+            <p id="loading-text" class="text-slate-700 font-medium">Processing...</p>
+            <p id="loading-sub" class="text-slate-400 text-sm mt-1"></p>
+        </div>
+    </div>
+
+    <!-- Notice Modal -->
+    <div id="noticeModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-slate-200">
+            <div class="flex items-start gap-4">
+                <div id="notice-icon" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+                    <i class="fas fa-info-circle text-xl"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h2 id="notice-title" class="text-xl font-bold text-slate-800">Notice</h2>
+                    <p id="notice-message" class="mt-2 text-sm text-slate-600 whitespace-pre-line"></p>
+                </div>
+                <button onclick="closeNotice(false)" class="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="notice-action" onclick="closeNotice(true)" class="px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 text-white hover:bg-slate-700">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Answer Details</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            <div id="detail-content"></div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 border rounded-lg">Close</button>
+                <button id="save-detail-btn" class="px-4 py-2 bg-teal-600 text-white rounded-lg">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Profile Modal -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-6 max-w-xl w-full shadow-2xl">
+            <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <div id="profile-avatar" class="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-lg font-bold text-teal-700"></div>
+                    <div>
+                        <h2 id="profile-name" class="text-xl font-bold text-slate-800">Student Profile</h2>
+                        <p class="text-sm text-slate-400">Learning record summary</p>
+                    </div>
+                </div>
+                <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
+            <div id="profile-content" class="pt-5"></div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeProfileModal()" class="px-4 py-2 border rounded-lg">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDetailId = null;
+        
+        async function loadDashboardStats() {
+            try {
+                const res = await fetch('/dashboard');
+                const stats = await res.json();
+                document.getElementById('total-count').innerText = stats.total_records;
+                document.getElementById('ai-correct-total').innerText = stats.ai_correct_count + '/' + stats.total_records;
+                document.getElementById('pending-count').innerText = stats.pending_review;
+                
+                const chapterSelect = document.getElementById('filter-chapter');
+                chapterSelect.innerHTML = '<option value="all">All Chapters</option>';
+                for (const [ch, data] of Object.entries(stats.chapter_stats)) {
+                    if (ch !== 'Unknown') {
+                        chapterSelect.innerHTML += `<option value="${ch}">${ch} (${data.total})</option>`;
+                    }
+                }
+            } catch(e) { console.error(e); }
+        }
+        
+        function showLoading(title, sub) {
+            document.getElementById('loading-text').innerText = title;
+            document.getElementById('loading-sub').innerText = sub || '';
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        let noticeCallback = null;
+
+        function showNotice(title, message, variant = 'info', actionLabel = 'OK', onAction = null) {
+            const modal = document.getElementById('noticeModal');
+            const icon = document.getElementById('notice-icon');
+            const titleEl = document.getElementById('notice-title');
+            const messageEl = document.getElementById('notice-message');
+            const actionBtn = document.getElementById('notice-action');
+            const styles = {
+                success: {
+                    iconClass: 'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700',
+                    icon: 'fas fa-check-circle text-xl',
+                    button: 'px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700',
+                },
+                error: {
+                    iconClass: 'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-700',
+                    icon: 'fas fa-exclamation-triangle text-xl',
+                    button: 'px-4 py-2 rounded-lg text-sm font-medium bg-rose-600 text-white hover:bg-rose-700',
+                },
+                warning: {
+                    iconClass: 'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700',
+                    icon: 'fas fa-exclamation-circle text-xl',
+                    button: 'px-4 py-2 rounded-lg text-sm font-medium bg-amber-600 text-white hover:bg-amber-700',
+                },
+                info: {
+                    iconClass: 'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600',
+                    icon: 'fas fa-info-circle text-xl',
+                    button: 'px-4 py-2 rounded-lg text-sm font-medium bg-slate-800 text-white hover:bg-slate-700',
+                },
+            };
+            const tone = styles[variant] || styles.info;
+            icon.className = tone.iconClass;
+            icon.innerHTML = `<i class="${tone.icon}"></i>`;
+            titleEl.innerText = title || 'Notice';
+            messageEl.innerHTML = escapeHtml(String(message || '')).replace(/\n/g, '<br>');
+            actionBtn.innerText = actionLabel || 'OK';
+            actionBtn.className = tone.button;
+            noticeCallback = typeof onAction === 'function' ? onAction : null;
+            modal.classList.remove('hidden');
+        }
+
+        function closeNotice(runAction) {
+            document.getElementById('noticeModal').classList.add('hidden');
+            const callback = noticeCallback;
+            noticeCallback = null;
+            if (runAction && callback) {
+                callback();
+            }
+        }
+
+        async function uploadCSV() {
+            const file = document.getElementById('csvInput').files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            showLoading('AI Grading in Progress', 'Uploading and evaluating student answers...');
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                hideLoading();
+                const isSuccess = data.status === 'success';
+                showNotice(
+                    isSuccess ? 'Upload Complete' : 'Upload Failed',
+                    data.message,
+                    isSuccess ? 'success' : 'error',
+                    isSuccess ? 'Reload' : 'OK',
+                    isSuccess ? () => location.reload() : null
+                );
+            } catch (e) {
+                hideLoading();
+                showNotice('Upload Failed', 'Upload failed: ' + e.message, 'error');
+            }
+        }
+
+        async function uploadKnowledge() {
+            const file = document.getElementById('knowledgeInput').files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            showLoading('Uploading Course Material', 'Parsing and indexing document...');
+            try {
+                const res = await fetch('/knowledge/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                hideLoading();
+                const isSuccess = data.status === 'success';
+                const message = isSuccess
+                    ? data.message
+                    : (String(data.message || '').includes('Knowledge Service is unavailable')
+                        ? 'The Teacher App cannot reach the Knowledge Service at http://127.0.0.1:5100.\nStart that service and try again.'
+                        : data.message);
+                showNotice(
+                    isSuccess ? 'Knowledge Uploaded' : 'Knowledge Service Unavailable',
+                    message,
+                    isSuccess ? 'success' : 'error'
+                );
+                document.getElementById('knowledgeInput').value = '';
+                loadKnowledgeList();
+            } catch (e) {
+                hideLoading();
+                showNotice('Knowledge Upload Failed', 'Upload failed: ' + e.message, 'error');
+            }
+        }
+
+        async function syncFromStudents() {
+            showLoading('Syncing', 'Fetching student answers from MySQL...');
+            try {
+                const res = await fetch('/sync_from_students', { method: 'POST' });
+                const data = await res.json();
+                hideLoading();
+                const needsReload = data.status === 'success' && data.synced > 0;
+                showNotice(
+                    needsReload ? 'Sync Complete' : 'Sync Result',
+                    data.message,
+                    data.status === 'success' ? 'success' : 'error',
+                    needsReload ? 'Reload' : 'OK',
+                    needsReload ? () => location.reload() : null
+                );
+            } catch (e) {
+                hideLoading();
+                showNotice('Sync Failed', 'Sync failed: ' + e.message, 'error');
+            }
+        }
+
+        async function loadKnowledgeList() {
+            try {
+                const res = await fetch('/knowledge/list');
+                const docs = await res.json();
+                const el = document.getElementById('knowledge-list');
+                if (!docs || docs.length === 0) {
+                    el.innerHTML = '<span class="italic">No documents loaded</span>';
+                    return;
+                }
+                el.innerHTML = docs.map(d => `
+                    <div class="flex justify-between items-center py-1">
+                        <span title="${d.doc_id}">${escapeHtml(d.source_file)} (${d.chunk_count} chunks, ${d.chapter_count || 1} chapter${(d.chapter_count || 1) === 1 ? '' : 's'})</span>
+                        <button onclick="deleteKnowledge('${d.doc_id}')" class="text-slate-500 hover:text-red-400"><i class="fas fa-times"></i></button>
+                    </div>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function deleteKnowledge(docId) {
+            if (!confirm('Remove this document from the knowledge base?')) return;
+            await fetch('/knowledge/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ doc_id: docId })
+            });
+            loadKnowledgeList();
+        }
+        
+        async function saveItem(id, name) {
+            const score = document.getElementById('score-' + id).value;
+            const res = await fetch('/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, name, score })
+            });
+            const data = await res.json();
+            showNotice('Saved', 'Last updated: ' + data.update_time, 'success', 'Reload', () => location.reload());
+        }
+
+        function renderReviewOption(option) {
+            const isSelected = Boolean(option && option.is_selected);
+            const isCorrect = Boolean(option && option.is_correct);
+            const markers = [];
+            if (isSelected) markers.push('Selected');
+            if (isCorrect) markers.push('Correct');
+            else if (isSelected) markers.push('Incorrect');
+            const tone = isCorrect
+                ? 'border-emerald-200 bg-emerald-50'
+                : isSelected
+                    ? 'border-rose-200 bg-rose-50'
+                    : 'border-slate-200 bg-slate-50';
+            const markerTone = isCorrect
+                ? 'text-emerald-700'
+                : isSelected
+                    ? 'text-rose-700'
+                    : 'text-slate-500';
+            const markerHtml = markers.length
+                ? `<span class="ml-auto text-[10px] uppercase tracking-wide ${markerTone}">${markers.join(' / ')}</span>`
+                : '';
+            return `
+                <div class="flex items-start gap-2 rounded-lg border ${tone} px-3 py-2">
+                    <span class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[11px] font-bold text-slate-600">${escapeHtml(option?.label || '')}</span>
+                    <span class="min-w-0 flex-1 text-sm text-slate-700">${escapeHtml(option?.text || '')}</span>
+                    ${markerHtml}
+                </div>`;
+        }
+
+        function renderPairList(title, pairs) {
+            if (!Array.isArray(pairs) || pairs.length === 0) return '';
+            return `
+                <div>
+                    <div class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">${escapeHtml(title)}</div>
+                    <div class="space-y-2">
+                        ${pairs.map(pair => `<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">${escapeHtml(pair)}</div>`).join('')}
+                    </div>
+                </div>`;
+        }
+
+        function renderReviewPanel(review) {
+            if (!review || typeof review !== 'object') return '';
+            const options = Array.isArray(review.options) ? review.options : [];
+            const submittedPairs = Array.isArray(review.submitted_pairs) ? review.submitted_pairs : [];
+            const correctPairs = Array.isArray(review.correct_pairs) ? review.correct_pairs : [];
+            if (options.length === 0 && submittedPairs.length === 0 && correctPairs.length === 0) return '';
+            const optionBlock = options.length > 0
+                ? `<div class="space-y-2">${options.map(renderReviewOption).join('')}</div>`
+                : '';
+            const matchingBlock = submittedPairs.length > 0 || correctPairs.length > 0
+                ? `<div class="grid gap-3 md:grid-cols-2">${renderPairList('Student pairs', submittedPairs)}${renderPairList('Correct pairs', correctPairs)}</div>`
+                : '';
+            return `
+                <div class="space-y-3 rounded-lg border border-slate-200 bg-white p-3">
+                    ${optionBlock}
+                    ${matchingBlock}
+                </div>`;
+        }
+
+        function renderFeedbackKeyPoint(index, text) {
+            return `
+                <div class="flex items-start gap-3 rounded-lg border border-slate-200 bg-white/90 px-3 py-2 shadow-sm">
+                    <span class="mt-0.5 inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 px-2 text-[11px] font-bold text-slate-600">${escapeHtml(index)}</span>
+                    <span class="min-w-0 flex-1 text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(text)}</span>
+                </div>`;
+        }
+
+        function renderFeedbackAssessment(index, scoreText, comment) {
+            const score = Number.parseFloat(String(scoreText).split('/')[0] || '0');
+            const tone = score >= 80
+                ? 'border-emerald-200 bg-emerald-50'
+                : score >= 60
+                    ? 'border-amber-200 bg-amber-50'
+                    : 'border-rose-200 bg-rose-50';
+            const scoreTone = score >= 80
+                ? 'bg-emerald-100 text-emerald-700'
+                : score >= 60
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-rose-100 text-rose-700';
+            return `
+                <div class="flex items-start gap-3 rounded-lg border ${tone} px-3 py-2 shadow-sm">
+                    <span class="mt-0.5 inline-flex h-6 min-w-10 shrink-0 items-center justify-center rounded-full ${scoreTone} px-2 text-[11px] font-bold">${escapeHtml(scoreText)}</span>
+                    <span class="min-w-0 flex-1 text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(comment)}</span>
+                </div>`;
+        }
+
+        function renderFeedbackPair(index, leftText, rightText) {
+            return `
+                <div class="rounded-lg border border-slate-200 bg-white/90 px-3 py-2 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <span class="mt-0.5 inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 px-2 text-[11px] font-bold text-slate-600">${escapeHtml(index)}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-medium text-slate-700 whitespace-pre-wrap">${escapeHtml(leftText)}</div>
+                            <div class="mt-1 text-sm text-slate-500 whitespace-pre-wrap"><span class="mr-1 text-slate-400">-&gt;</span>${escapeHtml(rightText)}</div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderAiFeedback(feedback) {
+            const text = String(feedback || '').trim();
+            if (!text) {
+                return '<div class="text-sm text-slate-400">No AI feedback recorded.</div>';
+            }
+            const lines = text.split(/\r?\n/);
+            const blocks = [];
+            let currentSection = '';
+            let skipCourseReferences = false;
+
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) {
+                    return;
+                }
+                if (skipCourseReferences) {
+                    if (/^(Generation source|Grading source):/.test(trimmed)) {
+                        skipCourseReferences = false;
+                    } else {
+                        return;
+                    }
+                }
+                if (trimmed === '[KBot Detailed Feedback v1]') {
+                    blocks.push('<div class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-700">KBot Detailed Feedback</div>');
+                    return;
+                }
+                const section = trimmed.match(/^(Options|Submitted pairs|Correct pairs|Required key points|Key-point assessment|Course references):$/);
+                if (section) {
+                    const sectionName = section[1];
+                    if (sectionName === 'Course references') {
+                        skipCourseReferences = true;
+                        currentSection = '';
+                        return;
+                    }
+                    blocks.push('<div class="mt-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">' + escapeHtml(sectionName) + '</div>');
+                    currentSection = sectionName;
+                    return;
+                }
+                const kv = trimmed.match(/^(Question type|Question|Student answer|Result|Score|Correct answer|AI grading comment|Explanation|Generation source|Grading source):\s*(.*)$/);
+                if (kv) {
+                    blocks.push(`
+                        <div class="grid gap-2 rounded-xl bg-white/90 px-3 py-2 shadow-sm sm:grid-cols-[140px_1fr]">
+                            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">${escapeHtml(kv[1])}</div>
+                            <div class="text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(kv[2])}</div>
+                        </div>`);
+                    currentSection = '';
+                    return;
+                }
+                if (currentSection === 'Options') {
+                    const optionMatch = trimmed.match(/^([A-Z])\.\s+(.*?)(?:\s+\[(.*?)\])?$/);
+                    if (optionMatch) {
+                        const tags = String(optionMatch[3] || '').toUpperCase();
+                        blocks.push(renderReviewOption({
+                            label: optionMatch[1],
+                            text: optionMatch[2],
+                            is_correct: tags.includes('CORRECT'),
+                            is_selected: tags.includes('STUDENT SELECTED'),
+                        }));
+                        return;
+                    }
+                    if (/^(Correct option|Other options):/.test(trimmed)) {
+                        return;
+                    }
+                }
+                if (currentSection === 'Submitted pairs' || currentSection === 'Correct pairs') {
+                    const pairMatch = trimmed.match(/^(\d+)\.\s*(.*?)\s*->\s*(.*)$/);
+                    if (pairMatch) {
+                        blocks.push(renderFeedbackPair(pairMatch[1], pairMatch[2], pairMatch[3]));
+                        return;
+                    }
+                }
+                if (currentSection === 'Required key points') {
+                    const keyPointMatch = trimmed.match(/^(\d+)\.\s*(.*)$/);
+                    if (keyPointMatch) {
+                        blocks.push(renderFeedbackKeyPoint(keyPointMatch[1], keyPointMatch[2]));
+                        return;
+                    }
+                }
+                if (currentSection === 'Key-point assessment') {
+                    const assessmentMatch = trimmed.match(/^(\d+)\.\s*(\d+(?:\.\d+)?\/100)\s*\|\s*(.*)$/);
+                    if (assessmentMatch) {
+                        blocks.push(renderFeedbackAssessment(assessmentMatch[1], assessmentMatch[2], assessmentMatch[3]));
+                        return;
+                    }
+                }
+                if (/^(Correct option|Other options):/.test(trimmed)) {
+                    return;
+                }
+                if (/^\d+\./.test(trimmed) || /^-/.test(trimmed)) {
+                    blocks.push(`<div class="pl-4 text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(trimmed)}</div>`);
+                    return;
+                }
+                blocks.push(`<div class="text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(trimmed)}</div>`);
+                currentSection = '';
+            });
+
+            return `<div class="space-y-2 rounded-xl border border-amber-200 bg-amber-50/60 p-3 leading-6">${blocks.join('')}</div>`;
+        }
+        
+        async function showDetail(id) {
+            currentDetailId = id;
+            try {
+                const res = await fetch(`/get_detail/${id}`);
+                const data = await res.json();
+                if (data.status === 'error') {
+                    showNotice('Record Not Found', data.message, 'error');
+                    return;
+                }
+                const content = document.getElementById('detail-content');
+                const answerDisplay = data.answer_display || data.answer || '';
+                const reviewMarkup = renderReviewPanel(data.review);
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="font-bold">Question:</label>
+                            <div class="mt-1 space-y-3 bg-slate-50 p-3 rounded-lg">
+                                <p>${escapeHtml(data.question)}</p>
+                                ${reviewMarkup ? `<div class="border-t border-slate-200 pt-3">${reviewMarkup}</div>` : ''}
+                            </div>
+                        </div>
+                        <div><label class="font-bold">Student Answer:</label><p class="mt-1 bg-slate-50 p-3 rounded-lg">${escapeHtml(answerDisplay)}</p></div>
+                        <div><label class="font-bold">AI Score:</label><p class="mt-1 text-lg font-bold">${Number(data.ai_score || 0)}</p></div>
+                        <div><label class="font-bold">AI Feedback:</label><div class="mt-1">${renderAiFeedback(data.ai_feedback || '')}</div></div>
+                        ${data.rag_cited && data.rag_cited.length > 0 ? `
+                        <div><label class="font-bold text-emerald-600"><i class="fas fa-link mr-1"></i>RAG References (${data.rag_cited.length}):</label>
+                          <div class="mt-1 space-y-2">${data.rag_cited.map(function(ref) {
+                            const pageInfo = ref.page ? ', page ' + ref.page : '';
+                            const sourceLabel = (ref.source_file || 'Unknown') + pageInfo;
+                            return '<div class="bg-emerald-50 p-3 rounded-lg text-xs"><div class="text-emerald-700 font-medium mb-1">' + escapeHtml(sourceLabel) + '</div><div class="text-slate-600">' + escapeHtml(ref.text || '').substring(0, 300) + (ref.text && ref.text.length > 300 ? '...' : '') + '</div></div>';
+                          }).join('')}</div>
+                        </div>` : ''}
+                        <div class="border-t pt-4">
+                          <label class="font-bold moodle-link"><i class="fas fa-chalkboard-teacher mr-1"></i>Teacher Review</label>
+                        </div>
+                        <div><label class="font-bold">Teacher Score:</label><input type="number" id="detail-score" class="w-24 border rounded-lg p-2 ml-2" value="${data.score}" min="0" max="100"></div>
+                        <div><label class="font-bold">Teacher Feedback:</label><textarea id="detail-feedback" class="w-full border rounded-lg p-2 mt-1" rows="3" placeholder="Write feedback for the student...">${escapeHtml(data.teacher_feedback || '')}</textarea></div>
+                        <div><label class="font-bold">Chapter:</label><input type="text" id="detail-chapter" class="border rounded-lg p-2 ml-2" value="${escapeHtml(data.chapter)}"></div>
+                        <div><label class="font-bold">Correct Answer:</label><input type="text" id="detail-correct" class="border rounded-lg p-2 ml-2" value="" placeholder="Fill during review"></div>
+                        <div class="text-xs text-slate-400">${data.teacher_verified ? 'Previously verified' : 'Not yet verified'}</div>
+                    </div>
+                `;
+                document.getElementById('detailModal').classList.remove('hidden');
+                
+                document.getElementById('save-detail-btn').onclick = async () => {
+                    const newScore = document.getElementById('detail-score').value;
+                    const newChapter = document.getElementById('detail-chapter').value;
+                    const newCorrect = document.getElementById('detail-correct').value;
+                    const newFeedback = document.getElementById('detail-feedback').value;
+                    const payload = { id: currentDetailId, score: newScore, chapter: newChapter, teacher_feedback: newFeedback };
+                    if (String(newCorrect || '').trim()) {
+                        payload.correct_answer = newCorrect;
+                    }
+                    await fetch('/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    showNotice('Saved', 'Feedback written to MySQL for student view', 'success', 'Reload', () => location.reload());
+                };
+            } catch(e) {
+                showNotice('Failed to Load Details', 'Failed to load details: ' + e.message, 'error');
+            }
+        }
+        
+        function escapeHtml(str) {
+            if (str === undefined || str === null) return '';
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+            });
+        }
+
+        function encodeInlineArg(value) {
+            // encodeURIComponent intentionally leaves apostrophes unchanged;
+            // replace them as well before placing a value in an inline handler.
+            return encodeURIComponent(String(value ?? '')).replace(/'/g, '%27');
+        }
+        
+        async function batchVerify() {
+            const selected = getSelectedIds();
+            if (selected.length === 0) return;
+            const res = await fetch('/batch_update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selected, updates: { teacher_verified: true } })
+            });
+            const data = await res.json();
+            showNotice('Batch Verify Complete', data.message, 'success', 'Reload', () => location.reload());
+        }
+        
+        async function batchReevaluate() {
+            const selected = getSelectedIds();
+            if (selected.length === 0) return;
+            showLoading('AI Re-evaluating', `Processing ${selected.length} record(s)...`);
+            let count = 0;
+            try {
+                for (const id of selected) {
+                    document.getElementById('loading-sub').innerText = `Processing ${count + 1} of ${selected.length}...`;
+                    await fetch('/ai_reevaluate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id })
+                    });
+                    count++;
+                }
+                hideLoading();
+                showNotice('Re-evaluation Complete', `Re-evaluated ${count} records`, 'success', 'Reload', () => location.reload());
+            } catch (e) {
+                hideLoading();
+                showNotice('Re-evaluation Failed', 'Re-evaluation failed: ' + e.message, 'error');
+            }
+        }
+        async function batchDelete() {
+            const selected = getSelectedIds();
+            if (selected.length === 0) return;
+            if (!confirm(`Are you sure you want to delete ${selected.length} record(s)? This action cannot be undone.`)) return;
+            try {
+                const res = await fetch('/batch_delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: selected })
+                });
+                const data = await res.json();
+                showNotice(
+                    data.status === 'success' ? 'Batch Delete Complete' : 'Delete Failed',
+                    data.message,
+                    data.status === 'success' ? 'success' : 'error',
+                    data.status === 'success' ? 'Reload' : 'OK',
+                    data.status === 'success' ? () => location.reload() : null
+                );
+            } catch (error) {
+                showNotice('Delete Failed', 'Delete failed: ' + error.message, 'error');
+            }
+        }
+        
+        function getSelectedIds() {
+            const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+        
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('select-all');
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateBatchBar();
+        }
+        
+        function updateBatchBar() {
+            const selected = getSelectedIds();
+            const bar = document.getElementById('batch-bar');
+            if (selected.length > 0) {
+                bar.classList.remove('hidden');
+                document.getElementById('selected-count').innerText = selected.length;
+            } else {
+                bar.classList.add('hidden');
+            }
+        }
+        
+        async function performSearch() {
+            const kw = document.getElementById('keyword').value.trim();
+            if (!kw) return;
+            try {
+                const res = await fetch('/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword: kw })
+                });
+                const data = await res.json();
+                if (!res.ok || !Array.isArray(data)) throw new Error(data.error || 'Search request failed.');
+                renderTable(data);
+            } catch (error) {
+                console.error('Hybrid search failed:', error);
+                showNotice('Search Failed', `Search failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function searchByStudentName() {
+            const name = document.getElementById('keyword').value;
+            if (!name) {
+                showNotice('Student Name Required', 'Please enter a student name to search.', 'warning');
+                return;
+            }
+            try {
+                const res = await fetch('/search_by_student_name', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                });
+                const data = await res.json();
+                renderTable(data);
+            } catch (error) {
+                console.error('Name search failed:', error);
+                showNotice('Search Failed', 'Search failed. Please try again.', 'error');
+            }
+        }
+        function renderTable(items) {
+            const tbody = document.getElementById('data-list');
+            tbody.innerHTML = items.map(item => {
+                const idArg = encodeInlineArg(item.id);
+                const nameArg = encodeInlineArg(item.name);
+                const answerDisplay = item.answer_display || item.answer || '';
+                const correctDisplay = item.correct_answer_display || item.correct_answer || '';
+                const optionsHint = item.options_display
+                    ? `<div class="mt-1 truncate text-[11px] text-slate-500" title="${escapeHtml(item.options_display)}">${escapeHtml(item.options_display)}</div>`
+                    : '';
+                const correctHint = correctDisplay
+                    ? `<div class="mt-1 truncate text-[11px] text-emerald-700" title="${escapeHtml(correctDisplay)}">Correct: ${escapeHtml(correctDisplay)}</div>`
+                    : '';
+                const searchMeta = item.search_match
+                    ? `<div class="text-[10px] text-slate-400 mt-1">${escapeHtml(item.search_match)} · ${Math.round(Number(item.search_score || 0) * 100)}%</div>`
+                    : '';
+                return `
+                <tr data-id="${escapeHtml(item.id)}" data-status="${item.teacher_verified ? 'verified' : 'pending'}">
+                    <td class="px-4 py-3"><input type="checkbox" class="row-checkbox" value="${escapeHtml(item.id)}" onchange="updateBatchBar()"></td>
+                    <td class="px-4 py-3"><a href="javascript:void(0)" onclick="showProfile(decodeURIComponent('${nameArg}'))" class="font-bold moodle-link">${escapeHtml(item.name)}</a></td>
+                    <td class="px-4 py-3">${escapeHtml(item.chapter) || '-'}</td>
+                    <td class="px-4 py-3">${escapeHtml(item.question_type) || '-'}</td>
+                    <td class="px-4 py-3 max-w-[250px]" title="${escapeHtml(item.question)}"><div class="truncate">${escapeHtml(item.question) || '-'}</div>${optionsHint}${searchMeta}</td>
+                    <td class="px-4 py-3 max-w-[220px]" title="${escapeHtml(answerDisplay)}"><div class="truncate">${escapeHtml(answerDisplay) || '-'}</div>${correctHint}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${item.ai_correct ? 'status-correct' : 'status-incorrect'}">${Number(item.ai_score || 0)}</span></td>
+                    <td class="px-4 py-3"><input type="number" id="score-${escapeHtml(item.id)}" value="${Number(item.score || 0)}" class="w-20 border rounded-lg p-1 text-center"></td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${item.teacher_verified ? 'status-correct' : 'status-pending'}">${item.teacher_verified ? 'Verified' : 'Pending'}</span></td>
+                    <td class="px-4 py-3 text-center space-x-2">
+                        <button onclick="showDetail(decodeURIComponent('${idArg}'))" class="moodle-link"><i class="fas fa-eye"></i></button>
+                        <button onclick="saveItem(decodeURIComponent('${idArg}'), decodeURIComponent('${nameArg}'))" class="text-emerald-500"><i class="fas fa-save"></i></button>
+                        <button onclick="deleteItem(decodeURIComponent('${idArg}'))" class="text-slate-300 hover:text-rose-500"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+            document.getElementById('pagination-nav').classList.add('hidden');
+        }
+        
+        function applyFilters() {
+            const status = document.getElementById('filter-status').value;
+            const chapter = document.getElementById('filter-chapter').value;
+            const rows = document.querySelectorAll('#data-list tr');
+            rows.forEach(row => {
+                let show = true;
+                if (status !== 'all') {
+                    const statusSpan = row.querySelector('.status-correct, .status-incorrect, .status-pending');
+                    if (status === 'correct' && !row.querySelector('.status-correct')) show = false;
+                    if (status === 'incorrect' && !row.querySelector('.status-incorrect')) show = false;
+                    if (status === 'pending' && (!statusSpan || statusSpan.innerText !== 'Pending')) show = false;
+                }
+                if (chapter !== 'all') {
+                    const chapterText = row.cells[2]?.innerText;
+                    if (chapterText !== chapter) show = false;
+                }
+                row.style.display = show ? '' : 'none';
+            });
+        }
+        
+        function profileInitials(name) {
+            const parts = String(name || 'Student').trim().split(/\s+/).filter(Boolean);
+            if (parts.length === 0) return 'S';
+            return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
+        }
+
+        function metricTone(value) {
+            const number = Number(value || 0);
+            if (number >= 80) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+            if (number >= 60) return 'border-amber-200 bg-amber-50 text-amber-700';
+            return 'border-rose-200 bg-rose-50 text-rose-700';
+        }
+
+        function renderProfileMetric(label, value, suffix, tone) {
+            return `
+                <div class="rounded-xl border ${tone} p-4">
+                    <div class="text-xs font-bold uppercase tracking-wide opacity-75">${escapeHtml(label)}</div>
+                    <div class="mt-2 text-2xl font-bold">${escapeHtml(value)}${suffix ? `<span class="ml-1 text-sm font-semibold">${escapeHtml(suffix)}</span>` : ''}</div>
+                </div>`;
+        }
+
+        async function showProfile(name) {
+            const modal = document.getElementById('profileModal');
+            const content = document.getElementById('profile-content');
+            const displayName = String(name || 'Student');
+            document.getElementById('profile-name').innerText = displayName;
+            document.getElementById('profile-avatar').innerText = profileInitials(displayName);
+            content.innerHTML = `
+                <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                    <div class="h-5 w-5 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"></div>
+                    Loading profile...
+                </div>`;
+            modal.classList.remove('hidden');
+            try {
+                const res = await fetch(`/student_profile/${encodeURIComponent(displayName)}`);
+                if (!res.ok) throw new Error('Profile request failed');
+                const data = await res.json();
+                const avg = Number(data.avg || 0);
+                const correctRate = Number(data.ai_correct_rate ?? data.ai_accuracy ?? 0);
+                const count = Number(data.count || 0);
+                const statusText = count === 0
+                    ? 'No records yet'
+                    : avg >= 80
+                        ? 'Strong performance'
+                        : avg >= 60
+                            ? 'Needs light review'
+                            : 'Needs support';
+                content.innerHTML = `
+                    <div class="space-y-5">
+                        <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <div>
+                                <div class="text-xs font-bold uppercase tracking-wide text-slate-500">Review Status</div>
+                                <div class="mt-1 text-sm font-semibold text-slate-700">${escapeHtml(statusText)}</div>
+                            </div>
+                            <span class="rounded-full px-3 py-1 text-xs font-bold ${metricTone(avg)}">${escapeHtml(String(avg))}/100</span>
+                        </div>
+                        <div class="grid gap-3 sm:grid-cols-3">
+                            ${renderProfileMetric('Average Score', String(avg), '/100', metricTone(avg))}
+                            ${renderProfileMetric('AI Correct Rate', String(correctRate), '%', metricTone(correctRate))}
+                            ${renderProfileMetric('Records', String(count), '', 'border-slate-200 bg-white text-slate-700')}
+                        </div>
+                    </div>`;
+            } catch (error) {
+                content.innerHTML = `
+                    <div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                        Failed to load profile: ${escapeHtml(error.message)}
+                    </div>`;
+            }
+        }
+        
+        async function deleteItem(id) {
+            if (confirm('Delete this record permanently?')) {
+                await fetch('/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                location.reload();
+            }
+        }
+        
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+        
+        loadDashboardStats();
+        loadKnowledgeList();
+        document.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', updateBatchBar));
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HKU Co-Learning KBot</title>
+    <link rel="icon" type="image/png" href="assets/hku-logo.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- ============================================================
+         LANDING VIEW — two entry points: Student & Teacher
+         ============================================================ -->
+    <main class="home-shell">
+      <header class="topbar">
+        <div class="brand-line">
+          <img src="assets/hku-logo.png" alt="HKU" class="topbar__logo topbar__logo--hku" />
+          <img src="assets/ece-logo.png" alt="ECE" class="topbar__logo topbar__logo--ece" />
+          <span class="topbar__divider"></span>
+          <span class="topbar__sitename">HKU Co-Learning KBot</span>
+        </div>
+      </header>
+
+      <section class="dashboard">
+        <div class="dashboard-heading">
+          <h1>Welcome</h1>
+          <p>Choose an entry point. Students and teachers use separate websites.</p>
+        </div>
+        <div class="app-grid">
+          <a class="app-card" href="/student/">
+            <span class="app-icon">S</span>
+            <small>Students</small>
+            <h2>Student Website</h2>
+            <p>Register with your @connect.hku.hk email, generate exercises, take quizzes, and review notes.</p>
+            <strong>Enter</strong>
+          </a>
+          <a class="app-card" href="/teacher/">
+            <span class="app-icon">T</span>
+            <small>Teachers</small>
+            <h2>Teacher Website</h2>
+            <p>Sign in with your teacher account to access AI grading and the math problem solver.</p>
+            <strong>Enter</strong>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

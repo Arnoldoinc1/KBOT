@@ -1,0 +1,29 @@
+{
+  "name": "HKU Co-Learning KBot",
+  "version": "8.0.13",
+  "architecture": "independent-knowledge-service_teacher-app_modular-student-app",
+  "coze_agents": ["quiz", "grading", "notes"],
+  "recommended_quiz_agent_types": ["mcq", "short_answer"],
+  "knowledge_source": "application-supplied-references-only",
+  "build_date_utc": "2026-08-03",
+  "release": "8.0.13-knowledge-bearing-fill-blank-validation",
+  "fixes": [
+    "reject articles, prepositions, connectors, auxiliaries and other function words as Fill Blank answers",
+    "require the completed Fill Blank sentence to match the notes, explanation and selected focus fact",
+    "rank local Fill Blank candidates by educational value instead of source order",
+    "prefer the fact-bearing receiver term in the reported GPS sentence",
+    "reject and locally repair invalid Quiz Agent Fill Blank output",
+    "update dynamic and fixed Quiz Agent prompts with course-knowledge rather than grammar rules"
+  ],
+  "verification": {
+    "compile": "complete Python source tree passed compileall",
+    "core_tests": "49/49 passed through unittest",
+    "short_answer_feedback_kahoot_tests": "27/27 passed through unittest",
+    "fill_blank_function_word_probe": "14/14 low-information answers rejected",
+    "fill_blank_fact_probe": "97 local items validated, 24 facts safely reported unavailable, 0 invalid items",
+    "javascript": "Student JavaScript and Teacher inline JavaScript passed node --check",
+    "docx_prompt_render": "4/4 pages rendered and visually inspected",
+    "agents_migration_http": "not executed because Flask/Werkzeug dependencies are unavailable in the build container",
+    "live_http_coze_mysql_windows": "not executed in the build container"
+  }
+}

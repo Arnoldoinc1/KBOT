@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "KBot: Knowledge Service",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "knowledge_service.run",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {"PYTHONPATH": "${workspaceFolder}"}
+    },
+    {
+      "name": "KBot: Teacher App",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "teacher_app.run",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {"PYTHONPATH": "${workspaceFolder}"}
+    },
+    {
+      "name": "KBot: Student App",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "student_app.run",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {"PYTHONPATH": "${workspaceFolder}"}
+    }
+  ]
+}

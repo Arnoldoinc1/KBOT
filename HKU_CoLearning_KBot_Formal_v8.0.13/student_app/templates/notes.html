@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Notes Question Answering · HKU Co-Learning KBot{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <span class="page-eyebrow">Notes Question Answering</span>
+  <h1>Ask the uploaded course notes</h1>
+  <p>Course-note evidence is used when available. KBot may also use general knowledge to clarify incomplete notes, and it displays supporting pages when a course reference is used.</p>
+</section>
+
+<section class="quiz-card notes-card">
+  {% if knowledge_error %}<p class="error-msg">{{ knowledge_error }}</p>{% endif %}
+
+  <form id="notes-form">
+    <div class="select-group">
+      <label for="notes_chapter_id">Course chapter</label>
+      <div class="custom-select">
+        <select id="notes_chapter_id" name="chapter_id" required {% if not chapters %}disabled{% endif %}>
+          <option value="">Select a chapter</option>
+          {% for chapter in chapters %}
+          <option value="{{ chapter.id }}">{{ chapter.label }} · {{ chapter.source_file }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <label class="field-label" for="notes_question">Your question</label>
+    <textarea id="notes_question" name="question" rows="5" maxlength="1000" required></textarea>
+    <button class="btn-primary" type="submit" {% if not chapters %}disabled{% endif %}>Ask Notes</button>
+    <p class="message hidden" aria-live="polite"></p>
+  </form>
+
+  <article id="notes-answer" class="notes-answer hidden">
+    <h2>Answer</h2>
+    <p class="answer-text"></p>
+    <div id="notes-citations" class="reference-list"></div>
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}<script>setupNotes();</script>{% endblock %}

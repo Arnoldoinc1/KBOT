@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Session Setup · HKU Co-Learning KBot{% endblock %}
+{% block body_class %}setup-page{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <span class="page-eyebrow">Exercise Generation</span>
+  <h1>Session Setup</h1>
+  <p>Select a course chapter before starting the five-step quiz flow.</p>
+</section>
+
+<div class="setup-container setup-wide">
+  <section class="setup-card">
+    <div class="section-marker"></div>
+    <h2>Select course material</h2>
+    <p class="tagline">Every question and answer will be grounded in the selected chapter.</p>
+
+    {% if knowledge_error %}<p class="error-msg">{{ knowledge_error }}</p>{% endif %}
+
+    <form id="setup-form" method="post" action="{{ url_for('exercise.setup_action') }}">
+      <div class="select-group">
+        <label for="chapter_id">Course chapter</label>
+        <div class="custom-select">
+          <select id="chapter_id" name="chapter_id" required {% if not chapters %}disabled{% endif %}>
+            <option value="">Select a chapter</option>
+            {% for chapter in chapters %}
+            <option value="{{ chapter.id }}">{{ chapter.label }} · {{ chapter.source_file }} · pages {{ chapter.first_page }}–{{ chapter.last_page }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary btn-block" type="submit" {% if not chapters %}disabled{% endif %}>Begin with True/False</button>
+      <p class="message hidden" aria-live="polite"></p>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script>bindJsonForm('#setup-form', '{{ url_for('exercise.setup_action') }}');</script>{% endblock %}

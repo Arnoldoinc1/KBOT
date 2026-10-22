@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}HKU Co-Learning KBot{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=8.0.13">
+</head>
+<body class="{% block body_class %}{% endblock %}" {% block body_attrs %}{% endblock %}>
+  <div class="app-container">
+    <header class="main-header">
+      <a class="hku-brand" href="{{ url_for('portal.dashboard') }}">
+        <span class="brand-logos">
+          <img src="{{ url_for('static', filename='images/hku-crest.jpg') }}" alt="The University of Hong Kong logo" class="hku-crest">
+          <span class="logo-divider" aria-hidden="true"></span>
+          <img src="{{ url_for('static', filename='images/ece-logo.jpg') }}" alt="HKU Department of Electrical and Computer Engineering logo" class="ece-logo">
+        </span>
+        <span class="brand-copy">
+          <span class="brand-kicker">The University of Hong Kong</span>
+          <span class="brand-name">HKU Co-Learning KBot</span>
+        </span>
+      </a>
+
+      {% if session.get('student_username') %}
+      <nav class="header-info" aria-label="Student navigation">
+        <span class="user-info">{{ session.get('display_name') or session.get('student_username') }}</span>
+        <a class="header-link" href="{{ url_for('portal.dashboard') }}">Home</a>
+        {% if 'exercise' in config.ENABLED_STUDENT_MODULES %}
+        <a class="header-link" href="{{ url_for('exercise.setup_page') }}">Session Setup</a>
+        {% endif %}
+        {% if 'notes' in config.ENABLED_STUDENT_MODULES %}
+        <a class="header-link" href="{{ url_for('notes.notes_page') }}">Notes QA</a>
+        {% endif %}
+        {% if 'history' in config.ENABLED_STUDENT_MODULES %}
+          {% if history_page_active %}
+          <a class="header-link back-to-quiz-link" href="{{ back_to_quiz_url }}"><i class="fas fa-arrow-left" aria-hidden="true"></i> {{ back_to_quiz_label }}</a>
+          {% else %}
+          <a class="header-link" href="{{ url_for('history.history_page') }}">My History</a>
+          {% endif %}
+        {% endif %}
+        <button id="logoutBtn" class="icon-btn" type="button">Log out</button>
+      </nav>
+      {% endif %}
+    </header>
+
+    <main class="{% block main_class %}quiz-main{% endblock %}">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <span>HKU Co-Learning KBot</span>
+      <span>Department of Electrical &amp; Computer Engineering · The University of Hong Kong</span>
+    </footer>
+  </div>
+
+<script>
+(function () {
+  const prefix = {{ (request.script_root if request is defined else "")|tojson }};
+  function path(url) {
+    return typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')
+      && url !== prefix && !url.startsWith(prefix + '/') ? prefix + url : url;
+  }
+  const originalFetch = window.fetch;
+  window.fetch = function (url, options) { return originalFetch.call(this, path(url), options); };
+  const originalOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url) {
+    arguments[1] = path(url); return originalOpen.apply(this, arguments);
+  };
+})();
+</script>
+  <script src="{{ url_for('static', filename='app.js') }}?v=8.0.13"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

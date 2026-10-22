@@ -1,0 +1,15 @@
+{
+  "name": "home-app",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Landing page and reverse proxy for the student / teacher websites",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5"
+  }
+}

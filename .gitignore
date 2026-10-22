@@ -1,0 +1,31 @@
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.production.example
+gmail_app_password.txt
+*.pem
+*.key
+
+# Dependencies and caches
+node_modules/
+__pycache__/
+.venv/
+venv/
+.cache/
+.pytest_cache/
+*.py[cod]
+
+# Runtime data
+data/
+uploads/
+logs/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Deployment archives
+*.zip
+*.ova
