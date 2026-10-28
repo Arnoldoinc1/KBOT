@@ -29,6 +29,7 @@ from common.knowledge_client import KnowledgeClient, KnowledgeServiceError
 from common.models import StudentQARecord, User, db
 from common.question_bank import upsert_items
 from common.schema_compat import ensure_legacy_schema
+from teacher_app.question_bank import bp as question_bank_bp
 from teacher_app.chroma_index import ChromaRecordIndex
 from teacher_app.kahoot_export import build_kahoot_xlsx
 from teacher_app.record_exports import build_records_xlsx
@@ -175,6 +176,7 @@ def create_app(overrides: dict | None = None) -> Flask:
     app.config["TEACHER_CHROMA_PATH"] = str(resolve_path(app.config["TEACHER_CHROMA_PATH"]))
     if app.config.get("TEACHER_SEMANTIC_MODEL_PATH"):
         app.config["TEACHER_SEMANTIC_MODEL_PATH"] = str(resolve_path(app.config["TEACHER_SEMANTIC_MODEL_PATH"]))
+    app.register_blueprint(question_bank_bp)
     db.init_app(app)
     record_index = ChromaRecordIndex(
         enabled=app.config["TEACHER_CHROMA_ENABLED"],

@@ -13,8 +13,8 @@ from common.auth import student_login_required
 from common.feedback_builder import build_detailed_feedback, build_review_payload
 from common.grading_engine import grade_fill_with_optional_agent, grade_objective, grade_short_answer, local_semantic_grade
 from common.knowledge_client import KnowledgeServiceError
-from common.models import QuizSession, StudentQARecord, TeacherQuestionBankItem, db
-from common.question_bank import pick_question, quiz_payload_from_item
+from common.models import QuizSession, StudentQARecord, db
+from common.question_bank import pick_question
 from common.quiz_engine import QUIZ_TYPES, QuizUnavailableError, generate_quiz
 from common.quiz_parser import QuizValidationError
 from common.quiz_flow import current_type as normalize_flow_type, request_matches_current, skip_transition, transition
@@ -226,30 +226,24 @@ def _generation_response(existing: dict[str, Any], current: str, topic: str) -> 
     }
 
 
-def _draft_from_bank_item(item: TeacherQuestionBankItem, quiz_type: str, topic: str) -> dict[str, Any]:
-    quiz = quiz_payload_from_item(item)
+def _draft_from_bank_hit(hit: dict[str, Any], quiz_type: str, topic: str) -> dict[str, Any]:
+    quiz = hit.get("quiz") if isinstance(hit.get("quiz"), dict) else None
     assert quiz is not None
-    citations = _loads(item.citations_json, [])
-    if not isinstance(citations, list):
-        citations = []
+    citations = hit.get("citations") if isinstance(hit.get("citations"), list) else []
+    chunk = hit.get("chunk") if isinstance(hit.get("chunk"), dict) else {}
+    bank_topic = topic if topic else str(hit.get("topic") or "").strip()
     return {
         "quiz_id": uuid.uuid4().hex,
         "quiz": quiz,
-        "generation_source": "question_bank",
+        "generation_source": str(hit.get("generation_source") or "question_bank"),
         "from_question_bank": True,
-        "focus_text": str(item.source_excerpt or item.fact_summary or ""),
-        "fact_key": str(item.fact_key or ""),
-        "chunk": {
-            "chunk_id": str(item.source_chunk_id or ""),
-            "knowledge_key": str(item.knowledge_key or ""),
-            "source_file": str(item.source_document or ""),
-            "page": item.source_page,
-            "text": str(item.source_excerpt or ""),
-        },
+        "focus_text": str(hit.get("focus_text") or hit.get("source_excerpt") or ""),
+        "fact_key": str(hit.get("fact_key") or ""),
+        "chunk": chunk,
         "citations": citations,
-        "topic": topic if topic is not None else str(item.topic or ""),
+        "topic": bank_topic,
         "quiz_type": quiz_type,
-        "fingerprint": str(item.question_fingerprint or f"bank-{item.id}"),
+        "fingerprint": str(hit.get("fingerprint") or f"bank-{uuid.uuid4().hex[:12]}"),
         "coverage_exhausted": False,
     }
 
@@ -567,13 +561,17 @@ def generate_action():
     record_id = record.id
     history = _history(record)
 
-    # Prefer teacher question bank before any AI / local generation.
-    bank_item = pick_question(
-        chapter_id, current, topic, history.get("fingerprints", []),
+    # Prefer teacher question bank (Excel BankQuestion, then reserved JSON bank).
+    bank_hit = pick_question(
+        chapter_id,
+        current,
+        topic,
+        history.get("fingerprints", []),
+        chapter_label=chapter_label,
     )
-    if bank_item is not None:
-        bank_topic = topic if topic else str(bank_item.topic or "").strip()
-        draft = _draft_from_bank_item(bank_item, current, bank_topic)
+    if bank_hit is not None:
+        bank_topic = topic if topic else str(bank_hit.get("topic") or "").strip()
+        draft = _draft_from_bank_hit(bank_hit, current, bank_topic)
         draft_raw = json.dumps(draft, ensure_ascii=False)
         updated = (
             db.session.query(QuizSession)

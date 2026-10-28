@@ -142,3 +142,21 @@ class QuizSession(db.Model):
     exhausted_count = db.Column(db.Integer, nullable=False, default=0)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class BankQuestion(db.Model):
+    """Teacher-authored exercises; never indexed as course knowledge."""
+    __tablename__ = "teacher_bank_questions"
+    id = db.Column(db.String(32), primary_key=True, default=lambda: uuid.uuid4().hex)
+    owner_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    course = db.Column(db.String(160), nullable=False, index=True)
+    question_id = db.Column(db.String(80), nullable=False)
+    question_type = db.Column(db.String(8), nullable=False, index=True)
+    topic = db.Column(db.String(256), nullable=False, default="")
+    question = db.Column(db.Text, nullable=False)
+    options = db.Column(db.JSON, nullable=False)
+    correct_answer = db.Column(db.String(8), nullable=False)
+    explanation = db.Column(db.Text, nullable=False, default="")
+    source = db.Column(db.String(32), nullable=False, default="teacher_upload")
+    created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
+    __table_args__ = (db.UniqueConstraint("owner_id", "course", "question_id", name="uq_bank_owner_course_question"),)
