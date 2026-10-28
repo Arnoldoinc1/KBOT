@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import time
 import uuid
 from typing import Any
@@ -281,6 +282,38 @@ def _search_limits(quiz_type: str, recovery: bool = False) -> tuple[int, int]:
     return min(20, max(normal[0] + 6, 16)), min(30, max(normal[1] + 6, 24)) if normal[1] else 0
 
 
+def _is_open_ended_topic(topic: str, chapter_label: str = "") -> bool:
+    """True when the learner asked for chapter-wide random generation.
+
+    Treat blank input and accidental chapter-title submissions the same: using
+    the chapter label as a lexical topic makes True/False matching fail because
+    notes rarely contain the phrase \"Chapter 3: Enabling Technologies\".
+    """
+    value = str(topic or "").strip()
+    if not value:
+        return True
+    chapter = str(chapter_label or "").strip()
+    if chapter and value.casefold() == chapter.casefold():
+        return True
+    return value.casefold() in {"course material", "course materials", "this chapter", "chapter"}
+
+
+def _derived_topic_from_generated(generated: Any, chapter_label: str = "") -> str:
+    """Pick a short lockable topic after chapter-wide (empty-input) generation."""
+    chunk = generated.focus.chunk if getattr(generated, "focus", None) else {}
+    if not isinstance(chunk, dict):
+        chunk = {}
+    section = str(chunk.get("section") or "").strip()
+    if section and len(section) <= 120 and not _is_open_ended_topic(section, chapter_label):
+        return section[:240]
+    text = str(getattr(getattr(generated, "focus", None), "text", "") or "").strip()
+    words = [part for part in re.findall(r"[A-Za-z][A-Za-z0-9'/-]*", text) if len(part) > 2][:4]
+    if words:
+        return " ".join(words)[:240]
+    # Prefer a concrete course keyword over re-locking the chapter title.
+    return "course content"
+
+
 def _generate_with_recovery(
     quiz_type: str,
     topic: str,
@@ -294,10 +327,14 @@ def _generate_with_recovery(
     and disables another external Agent call.  Therefore a learner is not asked
     to keep clicking Generate after the evidence pool is exhausted or an Agent
     response is unusable.
+
+    An empty ``topic`` means chapter-wide random generation: search the chapter
+    without topic_mode filtering so True/False can use any usable statement.
     """
     timings: dict[str, float] = {}
     last_error: Exception | None = None
     found_topic_evidence = False
+    chapter_wide = not bool(str(topic or "").strip())
     for recovery in (False, True):
         pass_started = time.perf_counter()
         search_history = history
@@ -307,9 +344,17 @@ def _generate_with_recovery(
             search_history = {**history, "knowledge": [], "chunks": [], "pages": []}
 
         search_limit, term_limit = _search_limits(quiz_type, recovery)
+        if chapter_wide:
+            # Empty-topic True/False needs a wider unused-statement pool; the
+            # highest-ranked empty-query chunks are often titles/discussion slides.
+            search_limit = max(search_limit, 20 if recovery else 16)
         search = knowledge_client().search(
-            topic, chapter_id, search_limit, search_history,
-            topic_mode=True, neighbor_pages=5 if quiz_type == "matching" else 0,
+            topic if not chapter_wide else "",
+            chapter_id,
+            search_limit,
+            search_history,
+            topic_mode=not chapter_wide,
+            neighbor_pages=5 if quiz_type == "matching" else 0,
         )
         timings[f"search_{'recovery' if recovery else 'primary'}"] = time.perf_counter() - pass_started
         if not search.get("results"):
@@ -440,6 +485,10 @@ def quiz_page(quiz_type: str):
     # failed out-of-scope request could therefore leave a stale locked topic in
     # the browser session.  Clear that legacy state when no question draft was
     # ever saved, so the input becomes editable again after an upgrade/reload.
+    # Also clear a locked chapter title — it is not a usable True/False topic.
+    if topic and _is_open_ended_topic(topic, str(session.get("chapter_label") or "")):
+        session.pop("quiz_topic", None)
+        topic = ""
     if current == "true_false" and topic:
         record = _record()
         if not _has_validated_topic(record):
@@ -487,6 +536,12 @@ def generate_action():
     record = _record()
     topic_is_locked = bool(locked_topic and _has_validated_topic(record))
     topic = locked_topic if topic_is_locked else submitted_topic
+    chapter_label = str(session.get("chapter_label") or "")
+    # Chapter title must not act as a lexical topic filter for True/False.
+    open_ended = _is_open_ended_topic(topic, chapter_label)
+    if open_ended and not topic_is_locked:
+        topic = ""
+        session.pop("quiz_topic", None)
 
     existing = _loads(record.current_quiz_json, {})
     if _has_saved_quiz(record, current):
@@ -545,8 +600,9 @@ def generate_action():
         )
         return jsonify(_generation_response(draft, current, bank_topic))
 
-    # No bank hit: generate (AI / local). Empty topic uses the chapter label as search focus.
-    generation_topic = topic or str(session.get("chapter_label") or "course material").strip()
+    # No bank hit: generate (AI / local). Keep generation_topic empty for
+    # chapter-wide random retrieval + True/False statement selection.
+    generation_topic = "" if open_ended else topic
     try:
         generated, timings, topic_evidence = _generate_with_recovery(
             current, generation_topic, chapter_id, history, record_id,
@@ -562,12 +618,16 @@ def generate_action():
         record = _release_generation_claim(record_id, marker_raw)
         message = str(exc)
         topic_evidence = "No relevant course-note content" not in message
+        # Do not persist the chapter title as the failed topic — that locks the
+        # rest of the flow onto an unmatchable lexical filter after Skip.
+        failure_topic = generation_topic if generation_topic else ""
         failure_count = _record_generation_failure(
-            record, current, generation_topic, message, skippable=topic_evidence,
+            record, current, failure_topic, message, skippable=topic_evidence,
         )
         current_app.logger.warning(
-            "Exercise generation exhausted recovery request=%s type=%s topic=%r total=%.3fs skippable=%s reason=%s",
-            request_id, current, generation_topic, time.perf_counter() - request_started_at, topic_evidence, message,
+            "Exercise generation exhausted recovery request=%s type=%s topic=%r open_ended=%s total=%.3fs skippable=%s reason=%s",
+            request_id, current, generation_topic, open_ended,
+            time.perf_counter() - request_started_at, topic_evidence, message,
         )
         payload = {
             "ok": False,
@@ -607,9 +667,14 @@ def generate_action():
         generation_finished_at - request_started_at,
     )
 
-    # Persist the learner-entered topic (may be empty). Generation may have used
-    # the chapter label only as a search focus when the input was blank.
-    locked_topic_value = topic or generation_topic
+    # Empty input: lock onto a concrete topic derived from the chosen evidence
+    # so later stages in the five-type flow stay coherent.
+    if open_ended:
+        locked_topic_value = _derived_topic_from_generated(
+            generated, str(session.get("chapter_label") or ""),
+        )
+    else:
+        locked_topic_value = topic
     quiz_id = uuid.uuid4().hex
     draft = {
         "quiz_id": quiz_id,
@@ -672,6 +737,8 @@ def skip_unavailable_stage():
         return jsonify({"ok": False, "error": "This stage has not exhausted its safe generation recovery."}), 409
 
     topic = str(session.get("quiz_topic") or failure.get("topic") or "").strip()
+    if _is_open_ended_topic(topic, str(session.get("chapter_label") or "")):
+        topic = ""
     # Empty topic is allowed when the learner started without a topic filter.
     skipped = _loads(getattr(record, "skipped_types_json", "[]"), [])
     if not isinstance(skipped, list):
@@ -685,7 +752,10 @@ def skip_unavailable_stage():
     record.skipped_types_json = json.dumps(skipped[-20:], ensure_ascii=False)
     record.current_quiz_json = "{}"
     _clear_generation_failure(record, current)
-    session["quiz_topic"] = topic
+    if topic:
+        session["quiz_topic"] = topic
+    else:
+        session.pop("quiz_topic", None)
 
     flow = skip_transition(current)
     if flow.completed:
